@@ -1,83 +1,103 @@
 import sublime
 import sublime_plugin
-import urllib
 import urllib2
-import threading
 import re
 import base64
 import json
 
-class serviceNowBuildCommand(sublime_plugin.TextCommand):  
-	def run(self, edit):  
-		self.timeout = 5
-		settings = sublime.load_settings('SN.sublime-settings')
 
-		# Get the body of the file
-		reg = sublime.Region(0, self.view.size())
-		self.text = self.view.substr(reg)
+class ServiceNowBuildListener(sublime_plugin.EventListener):
+    def on_pre_save(self, view):
+        view.run_command('service_now_build')
 
-		# Get the file URL from the comment in the file
-		urlMatch = re.search(r"__fileURL[\W=]*([a-zA-Z0-9:/.\-_?&=]*)", self.text)
-		if urlMatch:
-			url = urlMatch.groups()[0]
-		else:
-			sublime.message_dialog("No Instance Comment Found.")
-			return
 
-		# Get the instance name from the URL
-		instanceMatch = re.search(r"//([a-zA-Z0-9]*)\.", url)
-		instance = instanceMatch.groups()[0]
+class ServiceNowBuildCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        self.timeout = 5
 
-		authentication = settings.get( instance )
+        # Get the body of the file
+        reg = sublime.Region(0, self.view.size())
+        self.text = self.view.substr(reg)
 
-		if authentication:
-			authentication = "Basic " + authentication
-		else:
-			sublime.message_dialog("No authentication found")
-			return
+        # Get the file URL from the comment in the file
+        url_match = self.get_url(self.text)
+        if url_match:
+            url = url_match.groups()[0]
+        else:
+            print "Not a ServiceNow File"
+            return
 
-		try:  
-			data = json.dumps({"script" : self.text })
-			request = urllib2.Request(url, data)
-			request.add_header("Authorization", authentication)
-			request.add_header("Content-type", "application/json")  			
-			http_file = urllib2.urlopen(request, timeout=self.timeout)  
-			self.result = http_file.read()  
-			return  
-		except (urllib2.HTTPError) as (e):  
-			err = '%s: HTTP error %s contacting API' % (__name__, str(e.code))  
-		except (urllib2.URLError) as (e):  
-			err = '%s: URL error %s contacting API' % (__name__, str(e.reason))  
-		sublime.error_message(err)  
-		self.result = False
+        # Get the instance name from the URL
+        instance = self.get_instance(url)
 
-class serviceNowStoreAuthCommand(sublime_plugin.TextCommand):
-	def getAuthentication(self, edit):
-		reg = sublime.Region(0, self.view.size())
-		text = self.view.substr(reg)
+        if not instance:
+            print "No instance found"
+            return
 
-		urlMatch = re.search(r"__fileURL[\W=]*([a-zA-Z0-9:/.\-_?&=]*)", text)
-		if urlMatch:
-			url = urlMatch.groups()[0]
-		else:
-			sublime.message_dialog("No Instance Comment Found.")
-			return
+        # Get the Base64 encoded Auth String
+        authentication = self.get_authentication(edit, instance)
 
-		# Get the instance name from the URL
-		instanceMatch = re.search(r"//([a-zA-Z0-9]*)\.", url)
-		instance = instanceMatch.groups()[0]
+        if authentication:
+            authentication = "Basic " + authentication
+        else:
+            print "No authentication found"
+            return
 
-		authMatch = re.search(r"__authentication[\W=]*([a-zA-Z0-9:]*)", text)
-		if authMatch:
-			authentication = authMatch.groups()[0]
-		else:
-			sublime.message_dialog("No authentication information found.")
-			return		
+        try:
+            data = json.dumps({"script": self.text})
+            url = url + "&sysparm_action=update&JSON"
+            url = url.replace("sys_id", "sysparm_query=sys_id")
+            request = urllib2.Request(url, data)
+            request.add_header("Authorization", authentication)
+            request.add_header("Content-type", "application/json")
+            http_file = urllib2.urlopen(request, timeout=self.timeout)
+            self.result = http_file.read()
+            print "File Successully Uploaded"
+            return
+        except (urllib2.HTTPError) as (e):
+            err = 'Error %s' % (str(e.code))
+        except (urllib2.URLError) as (e):
+            err = 'Error %s' % (str(e.code))
 
-		base64string = base64.encodestring(authentication).replace('\n', '')
-		text = text.replace(authentication, "STORED");
-		self.view.replace(edit,reg,text)
+        print err
 
-		settings = sublime.load_settings('SN.sublime-settings')
-		settings.set( instance, base64string )
-		settings = sublime.save_settings('SN.sublime-settings')
+    def get_authentication(self, edit, instance):
+        settings = sublime.load_settings('SN.sublime-settings')
+        reg = sublime.Region(0, self.view.size())
+        text = self.view.substr(reg)
+
+        authMatch = re.search(r"__authentication[\W=]*([a-zA-Z0-9:]*)", text)
+
+        if authMatch and authMatch.groups()[0] != "STORED":
+            user_pass = authMatch.groups()[0]
+            authentication = self.store_authentication(edit, user_pass, instance)
+        else:
+            authentication = settings.get(instance)
+
+        if authentication:
+            return authentication
+        else:
+            return False
+
+    def store_authentication(self, edit, authentication, instance):
+        base64string = base64.encodestring(authentication).replace('\n', '')
+        reg = sublime.Region(0, self.view.size())
+        text = self.view.substr(reg)
+        self.text = text.replace(authentication, "STORED")
+        self.view.replace(edit, reg, self.text)
+
+        settings = sublime.load_settings('SN.sublime-settings')
+        settings.set(instance, base64string)
+        settings = sublime.save_settings('SN.sublime-settings')
+
+        return base64string
+
+    def get_url(self, text):
+        return re.search(r"__fileURL[\W=]*([a-zA-Z0-9:/.\-_?&=]*)", text)
+
+    def get_instance(self, url):
+        instance_match = re.search(r"//([a-zA-Z0-9]*)\.", url)
+        if instance_match:
+            return instance_match.groups()[0]
+        else:
+            return False
