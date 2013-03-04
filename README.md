@@ -24,3 +24,11 @@ To add credentials create a comment to the top of the file with the user name an
 The user name and password will be replaced with the word "STORED" if the command completed
   
 Credentials only need to be set once on any file that is set to an instance
+
+Installation
+==========
+1. Download the serviceNowBuild.py
+2. In Sublime: Go to Browse packages
+3. Create a new folder called ServiceNowBuild
+4. Take the downloaded serviceNowBuild.py and move it into your newly created folder
+5. Restart Sublime
