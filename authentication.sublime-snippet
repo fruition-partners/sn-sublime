@@ -1,5 +1,5 @@
 <snippet>
-	<content><![CDATA[//__authentication ${1:username}:${2:password}]]></content>
+	<content><![CDATA[//__authentication = ${1:username}:${2:password}]]></content>
 	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
 	<tabTrigger>auth</tabTrigger>
 </snippet>
