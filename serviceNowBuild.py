@@ -34,6 +34,13 @@ class ServiceNowBuildCommand(sublime_plugin.TextCommand):
             print "No instance found"
             return
 
+        # Get the field name from the comment in the file
+        fieldname = self.get_fieldname(self.text)
+        
+        if not fieldname:
+            fieldname = "script"
+            print "No fieldname found, using default 'script'"
+            
         # Get the Base64 encoded Auth String
         authentication = self.get_authentication(edit, instance)
 
@@ -44,7 +51,7 @@ class ServiceNowBuildCommand(sublime_plugin.TextCommand):
             return
 
         try:
-            data = json.dumps({"script": self.text})
+            data = json.dumps({fieldname: self.text})
             url = url + "&sysparm_action=update&JSON"
             url = url.replace("sys_id", "sysparm_query=sys_id")
             request = urllib2.Request(url, data)
@@ -91,6 +98,13 @@ class ServiceNowBuildCommand(sublime_plugin.TextCommand):
         settings = sublime.save_settings('SN.sublime-settings')
 
         return base64string
+
+    def get_fieldname(self, text):
+        fieldname_match = re.search(r"__fieldName[\W=]*([a-zA-Z0-9_]*)", text)
+        if fieldname_match:
+            return fieldname_match.groups()[0]
+        else:
+            return False
 
     def get_url(self, text):
         return re.search(r"__fileURL[\W=]*([a-zA-Z0-9:/.\-_?&=]*)", text)
