@@ -52,13 +52,10 @@ class ServiceNowBuildCommand(sublime_plugin.TextCommand):
             return
 
         # Get the field name from the comment in the file
-        fieldname = self.get_fieldname(self.text)
+        field_name = get_fieldname(self.text)
         
-        if not fieldname:
-            fieldname = "script"
-
         try:
-            data = json.dumps({fieldname: self.text})            
+            data = json.dumps({field_name: self.text})            
             url = self.url + "&sysparm_action=update&JSON"
             url = url.replace("sys_id", "sysparm_query=sys_id")
             result = http_call(authentication, url, data)
@@ -72,14 +69,6 @@ class ServiceNowBuildCommand(sublime_plugin.TextCommand):
 
         return
 
-    def get_fieldname(self, text):
-        fieldname_match = re.search(r"__fieldName[\W=]*([a-zA-Z0-9_]*)", text)
-        if fieldname_match:
-            return fieldname_match.groups()[0]
-        else:
-            return False
-        
-
 class ServiceNowSync(sublime_plugin.TextCommand):
     def run(self, edit):
         # Get the body of the file
@@ -91,11 +80,13 @@ class ServiceNowSync(sublime_plugin.TextCommand):
         if not authentication:
            return
 
+        field_name = get_fieldname(self.text)
+
         try:
             url = self.url + "&sysparm_action=get&JSON"
             url = url.replace("sys_id", "sysparm_sys_id")
             response_data = json.loads(http_call(authentication,url,{}))
-            serverText = response_data['records'][0]['script']
+            serverText = response_data['records'][0][field_name]
 
             if self.text != serverText and sublime.ok_cancel_dialog("File has been updated on server. \nPress OK to Reload."):
                 self.view.erase(edit, reg)
@@ -186,6 +177,14 @@ def get_instance(url):
 
 def syncFileCallback():
     sublime.active_window().active_view().run_command('service_now_sync')
+
+def get_fieldname(text):
+    fieldname_match = re.search(r"__fieldName[\W=]*([a-zA-Z0-9_]*)", text)
+    if fieldname_match:
+        return fieldname_match.groups()[0]
+    else:
+        return "script"
+
 
 glide_system_completions = ([("getUserID()", "getUserID()"),
             ("dateTimeNow()", "dateTimeNow()"),
