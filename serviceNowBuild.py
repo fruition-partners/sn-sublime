@@ -16,7 +16,7 @@ class ServiceNowBuildListener(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
         real_prefix = ""
         loc = locations[0];
-        print "Location:" + str(loc)
+
         if loc > 1:
             back_loc = locations[0] - 1
             space_found = False
@@ -24,7 +24,7 @@ class ServiceNowBuildListener(sublime_plugin.EventListener):
                 back_loc = back_loc -1
                 reg = sublime.Region(back_loc, back_loc+1)
                 char = view.substr(reg)
-                print "Character:" + char
+
                 if re.search(r"\s", char):
                     back_loc = back_loc + 1
                     space_found = True
@@ -33,14 +33,9 @@ class ServiceNowBuildListener(sublime_plugin.EventListener):
 
             reg = sublime.Region(back_loc, loc)
             real_prefix = view.substr(reg).replace(".","")
-            print "Prefix:" + real_prefix
 
         if real_prefix == "gs":
-            completions = ([("getUserID()", "getUserID()"),
-                            ("dateTimeNow()", "dateTimeNow()")
-                            ])
-            #completions = list(set(completions))
-            #completions.sort()
+            completions = glide_system_completions
                             
             return completions
 
@@ -60,7 +55,7 @@ class ServiceNowBuildCommand(sublime_plugin.TextCommand):
         fieldname = get_fieldname(self.text)           
 
         try:
-            data = json.dumps({fieldname: self.text})
+            data = json.dumps({fieldname: self.text})            
             url = self.url + "&sysparm_action=update&JSON"
             url = url.replace("sys_id", "sysparm_query=sys_id")
             result = http_call(authentication, url, data)
@@ -187,3 +182,38 @@ def get_instance(url):
 
 def syncFileCallback():
     sublime.active_window().active_view().run_command('service_now_sync')
+
+glide_system_completions = ([("getUserID()", "getUserID()"),
+            ("dateTimeNow()", "dateTimeNow()"),
+            ("eventQueue()","eventQueue()"),
+            ("getDisplayColumn()","getDisplayColumn()"),
+            ("getEscapedProperty()","getEscapedProperty()"),
+            ("getMessage()","getMessage()"),
+            ("getProperty()","getProperty()"),
+            ("getMessage()","getMessage()"),
+            ("getProperty()","getProperty()"),
+            ("getStyle()","getStyle()"),
+            ("log()","log($0)"),
+            ("nil()","nil()"),
+            ("print()","print()"),
+            ("setProperty()","setProperty()"),
+            ("tableExists()","tableExists()"),
+            ("breaker()","breaker()"),
+            ("cacheFlush()","cacheFlush()"),
+            ("escaper()","escaper()"),
+            ("eventQueueScheduled()","eventQueueScheduled()"),
+            ("eventsProcess()","eventsProcess()"),
+            ("executeCondition()","executeCondition()"),
+            ("fileExists()","fileExists()"),
+            ("generateURL()","generateURL()"),
+            ("globalPut()","globalPut()"),
+            ("installationSetting()","installationSetting()"),
+            ("isPaused()","isPaused()"),
+            ("mergeAttribute()","mergeAttribute()"),
+            ("pause()","pause()"),
+            ("resolveIcon()","resolveIcon()"),
+            ("resume()","resume()"),
+            ("sleep()","sleep()"),
+            ("templateExists()","templateExists()"),
+            ("unWrap()","unWrap()")            
+            ])
