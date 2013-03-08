@@ -54,51 +54,8 @@ class ServiceNowBuildCommand(sublime_plugin.TextCommand):
         # Get the Base64 encoded Auth String
         authentication = get_authentication(self, edit)
         if not authentication:
-<<<<<<< HEAD
             return
 
-        try:
-            data = json.dumps({"script": self.text})
-            url = self.url + "&sysparm_action=update&JSON"
-            url = url.replace("sys_id", "sysparm_query=sys_id")
-            result = http_call(authentication, url, data)
-            print "File Successully Uploaded"
-=======
->>>>>>> Re-added better authentication regex. Re-added fieldname paramater.
-            return
-        except (urllib2.HTTPError) as (e):
-            err = 'Error %s' % (str(e.code))
-        except (urllib2.URLError) as (e):
-            err = 'Error %s' % (str(e.code))
-        print err
-
-<<<<<<< HEAD
-        return
-        
-
-class ServiceNowSync(sublime_plugin.TextCommand):
-    def run(self, edit):
-        # Get the body of the file
-        reg = sublime.Region(0, self.view.size())
-        self.text = self.view.substr(reg)
-
-        # Get the Base64 encoded Auth String
-        authentication = get_authentication(self, edit)
-        if not authentication:
-           return
-
-        try:
-            url = self.url + "&sysparm_action=get&JSON"
-            url = url.replace("sys_id", "sysparm_sys_id")
-            response_data = json.loads(http_call(authentication,url,{}))
-            serverText = response_data['records'][0]['script']
-
-            if self.text != serverText and sublime.ok_cancel_dialog("File has been updated on server. \nPress OK to Reload."):
-                self.view.erase(edit, reg)
-                self.view.begin_edit()
-                self.view.insert(edit,0,serverText)
-                self.view.end_edit(edit)
-=======
         # Get the field name from the comment in the file
         fieldname = get_fieldname(self.text)           
 
@@ -108,34 +65,13 @@ class ServiceNowSync(sublime_plugin.TextCommand):
             url = url.replace("sys_id", "sysparm_query=sys_id")
             result = http_call(authentication, url, data)
             print "File Successully Uploaded"
->>>>>>> Re-added better authentication regex. Re-added fieldname paramater.
             return
         except (urllib2.HTTPError) as (e):
             err = 'Error %s' % (str(e.code))
         except (urllib2.URLError) as (e):
             err = 'Error %s' % (str(e.code))
         print err
-        
 
-<<<<<<< HEAD
-def http_call(authentication, url, data):
-    timeout = 5
-    request = urllib2.Request(url, data)
-    request.add_header("Authorization", authentication)
-    request.add_header("Content-type", "application/json")
-    http_file = urllib2.urlopen(request, timeout=timeout)
-    result = http_file.read()
-
-    return result
-
-
-def get_authentication(sublimeClass, edit):
-    # Get the file URL from the comment in the file
-    sublimeClass.url = get_url(sublimeClass.text)
-    if not sublimeClass.url:
-        return False
-
-=======
         return
         
 
@@ -186,7 +122,6 @@ def get_authentication(sublimeClass, edit):
     if not sublimeClass.url:
         return False
 
->>>>>>> Re-added better authentication regex. Re-added fieldname paramater.
     # Get the instance name from the URL
     instance = get_instance(sublimeClass.url)
     if not instance:
@@ -196,11 +131,7 @@ def get_authentication(sublimeClass, edit):
     reg = sublime.Region(0, sublimeClass.view.size())
     text = sublimeClass.view.substr(reg)
 
-<<<<<<< HEAD
-    authMatch = re.search(r"__authentication[\W=]*([a-zA-Z0-9:]*)", text)
-=======
     authMatch = re.search(r"__authentication[\W=]*([a-zA-Z0-9:~`\!@#$%\^&*()_\-;,.]*)", text)
->>>>>>> Re-added better authentication regex. Re-added fieldname paramater.
 
     if authMatch and authMatch.groups()[0] != "STORED":
         user_pass = authMatch.groups()[0]
@@ -228,15 +159,12 @@ def store_authentication(sublimeClass, edit, authentication, instance):
 
     return base64string
 
-<<<<<<< HEAD
-=======
 def get_fieldname(text):
     fieldname_match = re.search(r"__fieldName[\W=]*([a-zA-Z0-9_]*)", text)
     if fieldname_match:
         return fieldname_match.groups()[0]
     else:
         return 'script'
->>>>>>> Re-added better authentication regex. Re-added fieldname paramater.
 
 def get_url(text):
     url_match = re.search(r"__fileURL[\W=]*([a-zA-Z0-9:/.\-_?&=]*)", text)
