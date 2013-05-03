@@ -13,32 +13,6 @@ class ServiceNowBuildListener(sublime_plugin.EventListener):
     def on_load(self,view):
         sublime.set_timeout(syncFileCallback,10)
         
-    def on_query_completions(self, view, prefix, locations):
-        real_prefix = ""
-        loc = locations[0];
-
-        if loc > 1:
-            back_loc = locations[0] - 1
-            space_found = False
-            while back_loc >= 1 and space_found == False:
-                back_loc = back_loc -1
-                reg = sublime.Region(back_loc, back_loc+1)
-                char = view.substr(reg)
-
-                if re.search(r"\s", char):
-                    back_loc = back_loc + 1
-                    space_found = True
-                if char == ".":
-                    loc = back_loc
-
-            reg = sublime.Region(back_loc, loc)
-            real_prefix = view.substr(reg).replace(".","")
-
-        if real_prefix == "gs":
-            completions = glide_system_completions
-                            
-            return completions
-
 
 class ServiceNowBuildCommand(sublime_plugin.TextCommand):
     def run(self, edit):
@@ -182,38 +156,3 @@ def get_instance(url):
 
 def syncFileCallback():
     sublime.active_window().active_view().run_command('service_now_sync')
-
-glide_system_completions = ([("getUserID()", "getUserID()"),
-            ("dateTimeNow()", "dateTimeNow()"),
-            ("eventQueue()","eventQueue()"),
-            ("getDisplayColumn()","getDisplayColumn()"),
-            ("getEscapedProperty()","getEscapedProperty()"),
-            ("getMessage()","getMessage()"),
-            ("getProperty()","getProperty()"),
-            ("getMessage()","getMessage()"),
-            ("getProperty()","getProperty()"),
-            ("getStyle()","getStyle()"),
-            ("log()","log($0)"),
-            ("nil()","nil()"),
-            ("print()","print()"),
-            ("setProperty()","setProperty()"),
-            ("tableExists()","tableExists()"),
-            ("breaker()","breaker()"),
-            ("cacheFlush()","cacheFlush()"),
-            ("escaper()","escaper()"),
-            ("eventQueueScheduled()","eventQueueScheduled()"),
-            ("eventsProcess()","eventsProcess()"),
-            ("executeCondition()","executeCondition()"),
-            ("fileExists()","fileExists()"),
-            ("generateURL()","generateURL()"),
-            ("globalPut()","globalPut()"),
-            ("installationSetting()","installationSetting()"),
-            ("isPaused()","isPaused()"),
-            ("mergeAttribute()","mergeAttribute()"),
-            ("pause()","pause()"),
-            ("resolveIcon()","resolveIcon()"),
-            ("resume()","resume()"),
-            ("sleep()","sleep()"),
-            ("templateExists()","templateExists()"),
-            ("unWrap()","unWrap()")            
-            ])
