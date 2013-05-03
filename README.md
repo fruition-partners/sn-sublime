@@ -13,6 +13,10 @@ Example
 
   // __fileURL = https://fruition18.service-now.com/sys_ui_script.do?sys_id=db89dc86456b70c884e9262b8aecf165
 
+Files that are tied to a field other than the Script field will need to have that specified
+
+  // __fieldName = html
+
 Storing Credentials
 ==========
 
