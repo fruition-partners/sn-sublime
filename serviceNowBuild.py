@@ -55,12 +55,20 @@ class ServiceNowBuildCommand(sublime_plugin.TextCommand):
             url = self.url + "&sysparm_action=update&JSON"
             url = url.replace("sys_id", "sysparm_query=sys_id")
             result = http_call(authentication, url, data)
-            print "File Successully Uploaded"
+            print "SN-Sublime - File Successully Uploaded"
             return
         except (urllib2.HTTPError) as (e):
-            err = 'Error %s' % (str(e.code))
+            err = 'SN-Sublime - HTTP Error: %s' % (str(e.code))
         except (urllib2.URLError) as (e):
-            err = 'Error %s' % (str(e.code))
+            #Try again in case instance is using Dublin or later with JSONv2. Url is different
+            try:
+                url = self.url + "&sysparm_action=update&JSONv3"
+                url = url.replace("sys_id", "sysparm_query=sys_id")
+                result = http_call(authentication, url, data)
+                print "File Successully Uploaded to SN"
+                return
+            except (urllib2.URLError) as (e):
+                err = 'SN-Sublime - URL Error: %s' % (str(e))
         print err
 
         return
@@ -90,9 +98,9 @@ class ServiceNowSync(sublime_plugin.TextCommand):
                 self.view.end_edit(edit)
             return
         except (urllib2.HTTPError) as (e):
-            err = 'Error %s' % (str(e.code))
+            err = 'SN-Sublime - HTTP Error %s' % (str(e.code))
         except (urllib2.URLError) as (e):
-            err = 'Error %s' % (str(e.code))
+            err = 'SN-Sublime - URL Error %s' % (str(e.code))
         print err
         
 
@@ -133,7 +141,7 @@ def get_authentication(sublimeClass, edit):
     if authentication:
         return "Basic " + authentication
     else:
-        print "No authentication found"        
+        print "SN-Sublime - Auth Error. No authentication header tag found"        
         return False
 
 
@@ -163,7 +171,7 @@ def get_url(text):
     if url_match:
         return url_match.groups()[0]
     else:
-        print "Not a ServiceNow File"
+        print "SN-Sublime - Error. Not a ServiceNow File"
         return False
 
 
@@ -172,7 +180,7 @@ def get_instance(url):
     if instance_match:
         return instance_match.groups()[0]
     else:
-        print "No instance found"        
+        print "SN-Sublime - Error. No instance info found"        
         return False
 
 
