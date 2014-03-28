@@ -1,7 +1,7 @@
 sn-sublime
 ==========
 
-Sublime Integration with ServiceNow
+Sublime v2 Integration with ServiceNow
 
 
 Setting an instance
