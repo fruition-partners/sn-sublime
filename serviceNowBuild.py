@@ -62,7 +62,7 @@ class ServiceNowBuildCommand(sublime_plugin.TextCommand):
         except (urllib2.URLError) as (e):
             #Try again in case instance is using Dublin or later with JSONv2. Url is different
             try:
-                url = self.url + "&sysparm_action=update&JSONv3"
+                url = self.url + "&sysparm_action=update&JSONv2"
                 url = url.replace("sys_id", "sysparm_query=sys_id")
                 result = http_call(authentication, url, data)
                 print "File Successully Uploaded to SN"
