@@ -54,7 +54,6 @@ class ServiceNowBuildCommand(sublime_plugin.TextCommand):
             data = json.dumps({fieldname: self.text})            
             url = self.url + "&sysparm_action=update&JSON"
             url = url.replace("sys_id", "sysparm_query=sys_id")
-            print "SN URL: " + url
             result = http_call(authentication, url, data)
 
             #Check if success. If error, try with JSONv2 URL
