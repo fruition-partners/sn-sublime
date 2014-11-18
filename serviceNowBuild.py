@@ -54,21 +54,25 @@ class ServiceNowBuildCommand(sublime_plugin.TextCommand):
             data = json.dumps({fieldname: self.text})            
             url = self.url + "&sysparm_action=update&JSON"
             url = url.replace("sys_id", "sysparm_query=sys_id")
+            print "SN URL: " + url
             result = http_call(authentication, url, data)
-            print "SN-Sublime - File Successully Uploaded"
+
+            #Check if success. If error, try with JSONv2 URL
+            if "\"__status\":\"success\"" not in result:
+                url = self.url + "&sysparm_action=update&JSONv2"
+                url = url.replace("sys_id", "sysparm_query=sys_id")
+                result = http_call(authentication, url, data)
+
+            if "\"__status\":\"success\"" not in result:
+                print "SN-Sublime - File Upload Failed!!"
+                print "URL used: " + url    
+            else:
+                print "SN-Sublime - File Successully Uploaded"
             return
         except (urllib2.HTTPError) as (e):
             err = 'SN-Sublime - HTTP Error: %s' % (str(e.code))
         except (urllib2.URLError) as (e):
-            #Try again in case instance is using Dublin or later with JSONv2. Url is different
-            try:
-                url = self.url + "&sysparm_action=update&JSONv2"
-                url = url.replace("sys_id", "sysparm_query=sys_id")
-                result = http_call(authentication, url, data)
-                print "File Successully Uploaded to SN"
-                return
-            except (urllib2.URLError) as (e):
-                err = 'SN-Sublime - URL Error: %s' % (str(e))
+            err = 'SN-Sublime - URL Error: %s' % (str(e))
         print err
 
         return
